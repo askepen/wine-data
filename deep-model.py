@@ -42,7 +42,9 @@ class LitWineRegressor(pl.LightningModule):
         x, y = batch
         y_hat = self(x)
         loss = F.mse_loss(y_hat, y)
-        return loss
+        result = pl.TrainResult(minimize=loss)
+        result.log('train_loss', loss)
+        return result
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
@@ -101,17 +103,12 @@ def cli_main():
     pl.seed_everything(1337)
 
     # ------------
-    # logger
-    # ------------
-    wandb_logger = WandbLogger(name=f'Run-{time()}',project='WineRegressor')
-
-    # ------------
     # args
     # ------------
     parser = ArgumentParser()
     parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--max-epochs', default=10, type=int)
-    parser.add_argument('--logger', default=wandb_logger)
+    #parser.add_argument('--row_log_interval', default=5, type=int)
     parser = pl.Trainer.add_argparse_args(parser)
     parser = LitWineRegressor.add_model_specific_args(parser)
     args = parser.parse_args()
@@ -124,7 +121,7 @@ def cli_main():
     train_len = round(len(dataset)*0.8)
     wine_train, wine_val = random_split(dataset, [train_len, len(dataset)-train_len])
 
-    train_loader = DataLoader(wine_train, batch_size=args.batch_size,num_workers=4)
+    train_loader = DataLoader(wine_train, batch_size=args.batch_size)
     val_loader = DataLoader(wine_val, batch_size=args.batch_size)
     test_loader = DataLoader(wine_test, batch_size=args.batch_size)
 
@@ -134,15 +131,21 @@ def cli_main():
     model = LitWineRegressor(args.hidden_dim, args.learning_rate)
 
     # ------------
+    # logger
+    # ------------
+    wandb_logger = WandbLogger(name=f'Run-{int(time())}',project='WineRegressor')
+
+    # ------------
     # training
     # ------------
-    trainer = pl.Trainer.from_argparse_args(args)
+    trainer = pl.Trainer.from_argparse_args(args, logger=wandb_logger, row_log_interval=5)
     trainer.fit(model, train_loader, val_loader)
 
     # ------------
     # testing
     # ------------
-    trainer.test(test_dataloaders=test_loader)
+    
+    #trainer.test(test_dataloaders=test_loader)
 
 
 if __name__ == '__main__':

@@ -16,11 +16,11 @@ y = data.iloc[:,-1]
 # Reduce dimensions
 X_pca = PCA(n_components=2).fit_transform(X)
 
-# plt.scatter(X_pca[:,0], X_pca[:,1], c=y.values)
-# plt.colorbar()
-# plt.xlabel("PCA Axis 1")
-# plt.ylabel("PCA Axis 2")
-# plt.show()
+plt.scatter(X_pca[:,0], X_pca[:,1], c=y.values)
+plt.colorbar()
+plt.xlabel("PCA Axis 1")
+plt.ylabel("PCA Axis 2")
+plt.savefig("img/PCA.png")
 
 kf = KFold(n_splits=10)
 kf.get_n_splits(X)
